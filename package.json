@@ -1,5 +1,5 @@
 {
-  "name": "@hydra-ecology/kinnara",
+  "name": "@fatewajs/kinnara",
   "version": "1.0.0",
   "description": "Declarative proxy http api request.",
   "main": "dist/lib/kinnara.js",
