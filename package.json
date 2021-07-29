@@ -1,6 +1,6 @@
 {
   "name": "@fatewajs/kinnara",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "description": "Declarative proxy http api request.",
   "main": "dist/lib/kinnara.js",
   "author": "4everlynn",
