@@ -1,5 +1,4 @@
 ![](https://img.shields.io/badge/fatewajs-Kinara-black?style=for-the-badge&logo=typescript&labelColor=white)    
-![](https://gitlab.hitotek.com:8443/uploads/-/system/project/avatar/197/%E9%A1%B9%E7%9B%AE.png?width=64)
 
 
 ### Kinnara
