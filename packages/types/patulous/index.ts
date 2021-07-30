@@ -5,11 +5,12 @@
 import { RequestWrapper } from '../core'
 
 type Command = {
+    field?: any
     wrapper: RequestWrapper
     /**
      * Command name
      */
-    entrypoint: (...props: any[]) => RequestWrapper
+    entrypoint: (...props: any) => RequestWrapper
     /**
      * install command
      */

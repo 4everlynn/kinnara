@@ -1,5 +1,4 @@
-import { Command } from '../types'
-import { RequestWrapper } from '../types/core'
+import { Command, RequestWrapper } from '../types'
 
 export default class JoinCommand implements Command {
   wrapper!: RequestWrapper
@@ -11,12 +10,9 @@ export default class JoinCommand implements Command {
      */
   entrypoint (tmpl: TemplateStringsArray, ...props: string []): RequestWrapper {
     const builder = []
+    let index = 0
     for (const it of tmpl) {
-      if (Array.isArray(it)) {
-        builder.push(...it)
-      } else {
-        builder.push(it)
-      }
+      builder.push(...[it, props[index++]])
     }
     const result = builder.join('')
     const wrapper = this.wrapper

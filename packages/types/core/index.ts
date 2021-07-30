@@ -39,6 +39,8 @@ interface RequestCommand {
     head(request: RequestWrapper): Promise<any>
 
     options(request: RequestWrapper): Promise<any>
+
+    wrapper(request: RequestWrapper): Promise<any>
 }
 
 export {
