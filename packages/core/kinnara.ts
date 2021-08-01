@@ -1,20 +1,20 @@
 import {
+  Command,
   HttpMethod,
+  HttpProxy, Interceptor,
   RequestAdapter,
   RequestCommand,
   RequestWrapper,
-  Command,
-  StaticCommandSupport,
-  HttpProxy
+  StaticCommandSupport
 } from '../types'
 import log from '../support/support-logging'
+import ApiInterceptor from './api-interceptor'
 
 export default class Kinnara implements StaticCommandSupport, HttpProxy {
     /**
-     * 全局指令存储
-     * @private
+     * 全局指令存储, 公共参数，允许自定义指令自定义进行使用
      */
-    private static _cmd: any = {}
+    public static _cmd: any = {}
 
     /**
      * general agent
@@ -38,6 +38,12 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
      * @private
      */
     private _cmdProxy: any
+
+    private _interceptor: Interceptor
+
+    constructor () {
+      this._interceptor = new ApiInterceptor()
+    }
 
     /**
      * proxy routing
@@ -125,17 +131,16 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
       // 取出根节点的字符串
       const url = target[key]
       // last level, 底层代理，代理一个空对象
-      const rootProxy = new Proxy({}, {
+      return new Proxy({}, {
         get: (target, cmd) => {
           const commands = Kinnara._cmd
-
+          let rootWrapper = { url }
+          // 实例化 HTTP 客户端适配器
+          const client: any = self._http(rootWrapper, url)
           if (commands.hasOwnProperty(cmd)) {
             if (!self._cmdProxy) {
               self._cmdProxy = new Proxy(commands, {
                 get: (cmdProxy, name) => {
-                  let rootWrapper = { url }
-                  // 实例化 HTTP 客户端适配器
-                  const client: any = self._http(rootWrapper)
                   // 执行指令
                   const command = cmdProxy[name]
                   if (command && command.entrypoint) {
@@ -155,7 +160,6 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
             // 返回客户端
             return self._cmdProxy[cmd]
           }
-          const client: any = self._http({ url })
           // 未使用指令
           if (client[cmd]) {
             // 直接返回客户端
@@ -163,30 +167,34 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
           }
         }
       })
-      return rootProxy
     }
 
     /**
      * 返回包装好的 HTTP 客户端
      * @param rootWrapper
+     * @param original 原始 URI
      * @private
      */
-    private _http (rootWrapper: RequestWrapper) {
+    private _http (rootWrapper: RequestWrapper, original: string) {
       // 局部抽取，减少重复代码
       const inject = (w: RequestWrapper, m: HttpMethod = 'GET', wrapper: boolean = false): Promise<any> | any => {
-        if (wrapper) {
-          return {
-            method: w?.method ? w.method : m,
-            ...rootWrapper,
-            ...w
-          }
-        }
-        // noinspection TypeScriptValidateTypes
-        return this._adapter!.request({
+        // 请求对象封装
+        const struct = {
           method: w?.method ? w.method : m,
           ...rootWrapper,
           ...w
-        })
+        }
+        // wrapper 模式
+        if (wrapper) {
+          return struct
+        }
+        const request = this._adapter!.request(struct)
+
+        if (rootWrapper.observable === false) {
+          return request
+        }
+
+        return this._interceptor.process(original, request)
       }
       const requestWrapper: RequestCommand = {
         get: w => inject(w),
@@ -195,13 +203,19 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
         head: w => inject(w, 'HEAD'),
         patch: w => inject(w, 'PATCH'),
         options: w => inject(w, 'OPTIONS'),
-        wrapper: w => inject(w, 'GET', true)
+        struct: w => inject(w, 'GET', true)
       }
       return requestWrapper
     }
 
     setHttpAdapter (adapter: RequestAdapter): HttpProxy {
       this._adapter = adapter
+      return this
+    }
+
+    listen (uri: string, h: (response: any) => any): HttpProxy {
+      // 注册拦截器
+      this._interceptor.register({ uri, h })
       return this
     }
 }

@@ -1,5 +1,8 @@
 const ROUTING: any = {
-  placeholder: '/user/{id}'
+  placeholder: '/user/{id}',
+  energy: {
+    tce: '/tce'
+  }
 }
 
 export {

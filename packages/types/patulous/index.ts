@@ -6,7 +6,7 @@ import { RequestWrapper } from '../core'
 
 type Command = {
     field?: any
-    wrapper: RequestWrapper
+    wrapper?: RequestWrapper
     /**
      * Command name
      */

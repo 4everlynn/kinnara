@@ -1,4 +1,4 @@
-![](https://img.shields.io/badge/fatewajs-Kinara-black?style=for-the-badge&logo=typescript&labelColor=white)    
+![](https://img.shields.io/badge/fatewajs-Kinara-red?style=for-the-badge&logo=typescript&labelColor=black) ![](https://img.shields.io/badge/npm-v1.0.1-orange?style=for-the-badge&logo=npm&labelColor=black)  ![](https://img.shields.io/badge/gitpod-try!-gold?style=for-the-badge&logo=gitpod&labelColor=black)
 
 
 ### Kinnara
@@ -6,6 +6,10 @@
 > Imagine the past API access methods, complex, repeated redundant code, scattered modules,
 > long-term maintenance Code accumulation is difficult to solve, 
 > today Kinnara is born to solve such problems
+
+
+### Install
+
 
 Before we start, let’s review a little bit.  
 Under normal circumstances, our management of the API path
