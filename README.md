@@ -179,12 +179,12 @@ const response = proxy.park.settings
 #### seq
 ```js
 // Chain call instruction sequence
-const resposne = proxy.park.settings
+const response = proxy.park.settings
   .seq((chain) => {
     // chain provides all the instructions for the Kinnara library
     chain.join`/newParam`
-    chain.replace({settings: 'newSettings'})
-    chain.head({ContentType:'application/json'})
+    chain.replace({ settings: 'newSettings' })
+    chain.head({ ContentType:'application/json' })
   })
 
 // Now we get URI /newSettings/newParam

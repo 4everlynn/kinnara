@@ -19,8 +19,18 @@ export default class ApiInterceptor implements Interceptor {
     return request
   }
 
-  register (handler: { uri: string; h: (response: any) => any }): void {
-    this._symbols[this.encode(handler.uri)] = handler
+  register (handler: { uri: string; h: (response: any) => any }): string {
+    const key = this.encode(handler.uri)
+    this._symbols[key] = handler
+    return key
+  }
+
+  unload (uri:string) :boolean {
+    if (this._symbols[uri]) {
+      delete this._symbols[uri]
+      return true
+    }
+    return false
   }
 
   encode (uri: string): string {

@@ -26,8 +26,8 @@ interface Interceptor {
     register (handler: {
         uri: string,
         h: (response: any) => any
-    }): void
-
+    }): string
+    unload(uri:string):boolean
     encode (uri: string): string
 }
 
@@ -54,7 +54,8 @@ interface HttpProxy {
      * @param uri
      * @param h 处理器
      */
-    listen (uri: string, h: (response: any) => any): HttpProxy
+    listen (uri: string, h: (response: any) => any): string
+    cancel(url:string): boolean
 }
 
 interface RequestCommand {

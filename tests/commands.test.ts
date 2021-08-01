@@ -13,16 +13,18 @@ test('CommandTest', () => {
     .proxy(ROUTING)
 
   // 监听某个API的调用
-  kinnara.listen(ROUTING.placeholder, async (response: any) => {
+  const key = kinnara.listen(ROUTING.placeholder, async (response: any) => {
     // 调用另一个API
     // const tce = await proxy.energy.tce.get()
+    console.log('gggggg')
     return {
       edward: 'YOU WILL SEE THIS'
     }
   })
+  kinnara.unListen(key)
   // 经过侦听器
   proxy.placeholder.get()
-    .then((response: any) => { console.log(response) })
+    .then((response: any) => { console.log('pass', response) })
 
   // 不经过侦听器
   proxy.placeholder
