@@ -213,9 +213,12 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
       return this
     }
 
-    listen (uri: string, h: (response: any) => any): HttpProxy {
+    listen (uri: string, h: (response: any) => any): string {
       // 注册拦截器
-      this._interceptor.register({ uri, h })
-      return this
+      return this._interceptor.register({ uri, h })
+    }
+
+    cancel (uri: string):boolean {
+      return this._interceptor.unload(uri)
     }
 }

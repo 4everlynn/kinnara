@@ -43,7 +43,7 @@ This method is Highly not recommended
 &nbsp;&nbsp;&nbsp;&nbsp;In this mode, two files are usually required to cooperate with each other,   
 one is `routing` and the other is `request`, 
 let's take a look at this way.  
-
+``
 routing.js
 
 ```js
@@ -117,7 +117,7 @@ and can support `custom instructions`, and provide a set of operation instructio
 and we cannot avoid splicing.   
 &nbsp;&nbsp;&nbsp;&nbsp;For this reason, Kinnara provides a command interface through which we can easily manipulate URL, headers and other attributes.
 
-#### Join
+#### Basic environment
 
 ```js
  // installation instructions
@@ -139,6 +139,11 @@ const proxy =
         .setHttpAdapter(new AxiosHttpAdapter(axios))
         .proxy(routing)
 
+```
+
+#### Join
+
+```js
 const configId = 1
 
 const response = proxy.park.settings
@@ -148,4 +153,88 @@ const response = proxy.park.settings
 
 // Now we get URI /settings/single/1
 
+```
+#### head
+```js
+// Pass the request header parameter
+const response = proxy.park.settings
+  .head(
+    {
+      ContentType:'application/json',
+      origin: 'https://xxx'
+    }
+  )
+  .get()
+```
+#### replace
+
+```js
+// Replace a part of the url
+const response = proxy.park.settings
+  .replace({settings: 'newSettings'})
+  .get()
+
+// Now we get URI /newSettings
+```
+#### seq
+```js
+// Chain call instruction sequence
+const response = proxy.park.settings
+  .seq((chain) => {
+    // chain provides all the instructions for the Kinnara library
+    chain.join`/newParam`
+    chain.replace({ settings: 'newSettings' })
+    chain.head({ ContentType:'application/json' })
+  })
+
+// Now we get URI /newSettings/newParam
+```
+#### map
+```js
+// if the current instruction set does not meet your needs you can use the provided Map instruction
+// Expose API parameters for users to perform custom operations
+const resposne = proxy.park.settings
+  .map((it:RequestWrapper) => it)
+```
+
+#### observe
+```js
+// Please look down for details
+proxy.park.settings
+  .observe(false)
+  .get((response) => {
+    // Original results returned by the server
+    console.log(response)
+})
+```
+
+### Kinnara provides an observer model
+
+&nbsp;&nbsp;&nbsp;&nbsp;
+Kinnara provides a Listen function when the URL is in the request state, so you can intercept or perform some additional request processing.
+
+&nbsp;&nbsp;&nbsp;&nbsp; When you use, you can also use instructions to cancel the value returned by the function.
+### How to Use
+```js
+// Listen to an API
+kinnara.listen(routing.park.settings, (response) => {
+  // do anything you want
+  return {
+    response,
+    edward: 'You Will See This'
+  }
+})
+
+// After the listener
+proxy.park.settings.get((response) => {
+  const { response, edward } = response
+})
+
+// Use the observe instruction to cancel the return result of the listening function
+proxy.park.settings
+  .observe(false)
+  .get((response) => {
+    // Original results returned by the server
+    console.log(response)
+})
 ```
