@@ -1,4 +1,4 @@
-![](https://img.shields.io/badge/fatewajs-Kinara-red?style=for-the-badge&logo=typescript&labelColor=black) ![](https://img.shields.io/badge/npm-v1.0.1-orange?style=for-the-badge&logo=npm&labelColor=black)  ![](https://img.shields.io/badge/gitpod-try!-gold?style=for-the-badge&logo=gitpod&labelColor=black)
+![](https://img.shields.io/badge/fatewajs-Kinnara-red?style=for-the-badge&logo=typescript&labelColor=black) ![](https://img.shields.io/badge/npm-v1.0.1-orange?style=for-the-badge&logo=npm&labelColor=black)  ![](https://img.shields.io/badge/gitpod-try!-gold?style=for-the-badge&logo=gitpod&labelColor=black)
 
 
 ### Kinnara
