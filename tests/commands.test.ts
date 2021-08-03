@@ -21,7 +21,7 @@ test('CommandTest', () => {
       edward: 'YOU WILL SEE THIS'
     }
   })
-  kinnara.unListen(key)
+  kinnara.cancel(key)
   // 经过侦听器
   proxy.placeholder.get()
     .then((response: any) => { console.log('pass', response) })

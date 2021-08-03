@@ -29,7 +29,7 @@ const api = '{HOST}/hydra/info'
 
 ```
 
-&nbsp;&nbsp;&nbsp;&nbsp;Obviously, this method is extremely undesirable.   
+Obviously, this method is extremely undesirable.   
 It will make the API version difficult to manage.   
 Once the API version is upgraded,   
 the paths are scattered in various code files.   
@@ -40,11 +40,11 @@ This method is Highly not recommended
 
 ### 2. Centralized routing management
 
-&nbsp;&nbsp;&nbsp;&nbsp;In this mode, two files are usually required to cooperate with each other,   
+In this mode, two files are usually required to cooperate with each other,   
 one is `routing` and the other is `request`, 
 let's take a look at this way.  
-``
-routing.js
+
+routing.js   
 
 ```js
 export const routing = {
@@ -67,9 +67,9 @@ const getUserInfo  = async (id) => {
 }
 ```
 
-&nbsp;&nbsp;&nbsp;&nbsp;In this way, we can manage the API path and version well,      
+In this way, we can manage the API path and version well,      
 but there will be a lot of duplicate code.     
-&nbsp;&nbsp;&nbsp;&nbsp;There will be many copies of `request.js` and 90% of their composition is exactly the same.   
+There will be many copies of `request.js` and 90% of their composition is exactly the same.   
 This looks so stupid.  
 
 ---
@@ -107,15 +107,15 @@ const response = await proxy.park.settings.get({
 console.log(response.data)
 ```
 
-&nbsp;&nbsp;&nbsp;&nbsp;Yes! We can directly reuse the routing structure to directly request the interface,    
+Yes! We can directly reuse the routing structure to directly request the interface,    
 and can support `custom instructions`, and provide a set of operation instructions by default.  
-&nbsp;&nbsp;&nbsp;&nbsp;Believe me, using `Kinnara`, the API path is difficult to manage is a thing of the past.   
+Believe me, using `Kinnara`, the API path is difficult to manage is a thing of the past.   
 
 ### What is the instruction
 
-&nbsp;&nbsp;&nbsp;&nbsp;The URI that we declare in the path is often difficult to meet all situations,   
+The URI that we declare in the path is often difficult to meet all situations,   
 and we cannot avoid splicing.   
-&nbsp;&nbsp;&nbsp;&nbsp;For this reason, Kinnara provides a command interface through which we can easily manipulate URL, headers and other attributes.
+For this reason, Kinnara provides a command interface through which we can easily manipulate URL, headers and other attributes.
 
 #### Basic environment
 
@@ -210,10 +210,10 @@ proxy.park.settings
 
 ### Kinnara provides an observer model
 
-&nbsp;&nbsp;&nbsp;&nbsp;
+
 Kinnara provides a Listen function when the URL is in the request state, so you can intercept or perform some additional request processing.
 
-&nbsp;&nbsp;&nbsp;&nbsp; When you use, you can also use instructions to cancel the value returned by the function.
+ When you use, you can also use instructions to cancel the value returned by the function.
 ### How to Use
 ```js
 // Listen to an API
