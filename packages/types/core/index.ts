@@ -1,19 +1,21 @@
 type HttpMethod = 'GET' | 'POST' | 'OPTIONS' | 'PUT' | 'PATCH' | 'HEAD' |
     'get' | 'post' | 'options' | 'put' | 'patch' | 'head'
 
+type strategy = 'session' | 'local'
+
+type CacheParams = {
+    strategy: strategy,
+    frequency: number
+}
+
 type RequestWrapper = {
     method?: HttpMethod,
     url?: string,
     headers?: any,
     query?: any,
     body?: any
-    observable?: boolean
-}
-
-type ApiSymbol = {
-    uri: string,
-    key: string,
-    handler: (response: any) => void
+    observable?: boolean,
+    cache?: CacheParams | Number
 }
 
 interface RequestAdapter {
@@ -32,7 +34,6 @@ interface Interceptor {
 }
 
 export {
-  ApiSymbol,
   Interceptor
 }
 

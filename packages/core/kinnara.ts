@@ -136,7 +136,6 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
           const commands = Kinnara._cmd
           let rootWrapper = { url }
           // 实例化 HTTP 客户端适配器
-          const client: any = self._http(rootWrapper, url)
           if (commands.hasOwnProperty(cmd)) {
             if (!self._cmdProxy) {
               self._cmdProxy = new Proxy(commands, {
@@ -149,6 +148,7 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
                     // 设置入口点装饰器
                     command.bin = (...props: any) => {
                       rootWrapper = Object.assign(rootWrapper, command.entrypoint(...props))
+                      const client: any = self._http(rootWrapper, rootWrapper.url)
                       return client
                     }
                   }
@@ -160,6 +160,7 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
             // 返回客户端
             return self._cmdProxy[cmd]
           }
+          const client: any = self._http(rootWrapper, url)
           // 未使用指令
           if (client[cmd]) {
             // 直接返回客户端
