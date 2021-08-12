@@ -3,7 +3,6 @@
 import { Kinnara } from '../packages'
 import { ROUTING } from './simulation-data'
 import HttpClientAdapter from '../packages/types/adapter/http-client-adapter'
-import ApiInterceptor from '../packages/core/api-interceptor'
 
 test('CommandTest', () => {
   const kinnara = new Kinnara()
