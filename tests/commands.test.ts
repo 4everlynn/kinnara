@@ -52,10 +52,44 @@ test('CommandTest', () => {
   //     sub.replace({ new_token: 'token' })
   //   })
   // }).struct())
+
+  proxy.placeholder.join`/info`.get()
+
+  proxy.placeholder.seq((chain: any) => {
+    chain.join`/info`
+    chain.replace({
+      id: 1
+    })
+  }).get()
+
+  proxy.placeholder.replace({
+    id: 1
+  }).get()
 })
 
-test('', () => {
-  const apiInterceptor = new ApiInterceptor()
-  console.log(apiInterceptor.encode('/user/{s}'))
-  console.log(apiInterceptor.encode('{s}/user'))
+test('11', async () => {
+  const kinnara = new Kinnara()
+  kinnara.setHttpAdapter(new HttpClientAdapter())
+
+  const API = {
+    region: '/region',
+    industry: '/industry',
+    entType: '/ent-type',
+    ent: '/ent'
+  }
+
+  kinnara.listen(`${API.ent}/page`, async (response) => {
+    console.log('------')
+    const { data } = await $kinnara.industry.join`/page`.get({
+      query: { size: 9999 }
+    })
+    console.log(data)
+    return response
+  })
+
+  const $kinnara = kinnara.proxy(API)
+
+  const response = await $kinnara.ent.join`/page`.get()
+
+  console.log(response)
 })
