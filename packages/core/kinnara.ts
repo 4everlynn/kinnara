@@ -1,7 +1,8 @@
 import {
   Command,
   HttpMethod,
-  HttpProxy, Interceptor,
+  HttpProxy,
+  Interceptor,
   RequestAdapter,
   RequestCommand,
   RequestWrapper,
@@ -9,6 +10,7 @@ import {
 } from '../types'
 import log from '../support/support-logging'
 import ApiInterceptor from './api-interceptor'
+import ScopedCacheManager from './scoped-cache-manager'
 
 export default class Kinnara implements StaticCommandSupport, HttpProxy {
     /**
@@ -41,8 +43,15 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
 
     private _interceptor: Interceptor
 
+    /**
+     * 有作用域的缓存管理器
+     * @private
+     */
+    private _cache: ScopedCacheManager
+
     constructor () {
       this._interceptor = new ApiInterceptor()
+      this._cache = new ScopedCacheManager()
     }
 
     /**
@@ -54,7 +63,7 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
         throw new Error('You must specify a request adapter for request proxy.')
       }
       const self = this
-      // 根代理
+      // 根代理 root$->leafA$->leafB$->uri
       this._proxy = new Proxy(routing, {
         get: (target: any, property: string) => {
           // 判断原始路由是否存在该属性
@@ -87,25 +96,26 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
       return this
     }
 
-    static use (cmd: Command) {
+    static use (Cmd: any) {
+      const instance = new Cmd()
       // 安装指令
-      Kinnara._cmd[cmd.name()] = cmd
+      Kinnara._cmd[instance.name()] = Cmd
     }
 
     /**
      * 注入子代理
-     * @param target 当前字段父对象
+     * @param rootTarget 当前字段父对象
      * @param property 当前字段名称
      * @param parent 代理节点父对象
      * @private
      */
-    private _injectSubProxy (target: any, property: string, parent: any) {
+    private _injectSubProxy (rootTarget: any, property: string, parent: any) {
       const self = this
       // 由于存储的结构为平层结构, 存储时将 Key 存储为 A$.B$.C 的格式
       // 故最后一条即为当前节点，用于获取对象实际值
       const key = property.split('$.').reverse()[0]
       // 判定是否为根节点
-      if (!Kinnara._isRoot(target[key])) {
+      if (!Kinnara._isRoot(rootTarget[key])) {
         // 初始化代理对象
         if (!parent[property]) {
           parent[property] = {}
@@ -118,7 +128,7 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
           return parent[property]._proxy
         }
         // 初始化代理字段
-        parent[property]._proxy = new Proxy(target[key], {
+        parent[property]._proxy = new Proxy(rootTarget[key], {
           get: (t, p) => {
             // 递归代理
             return self._injectSubProxy(t, `${property}$.${p.toString()}`, parent[property])
@@ -129,38 +139,37 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
       }
       // 此处开始为递归至根节点
       // 取出根节点的字符串
-      const url = target[key]
+      const url = rootTarget[key]
       // last level, 底层代理，代理一个空对象
       return new Proxy({}, {
-        get: (target, cmd) => {
+        get: (target: any, cmd) => {
           const commands = Kinnara._cmd
           let rootWrapper = { url }
           // 实例化 HTTP 客户端适配器
           if (commands.hasOwnProperty(cmd)) {
-            if (!self._cmdProxy) {
-              self._cmdProxy = new Proxy(commands, {
-                get: (cmdProxy, name) => {
-                  // 执行指令
-                  const command = cmdProxy[name]
-                  if (command && command.entrypoint) {
-                    // 注入根请求对象
-                    command.wrapper = rootWrapper
-                    // 设置入口点装饰器
-                    command.bin = (...props: any) => {
-                      rootWrapper = Object.assign(rootWrapper, command.entrypoint(...props))
-                      const client: any = self._http(rootWrapper, rootWrapper.url)
-                      return client
-                    }
+            self._cmdProxy = new Proxy(commands, {
+              get: (cmdProxy, name) => {
+                // 执行指令
+                const command = new cmdProxy[name]()
+                const root = { url: rootTarget[key] }
+                // 注入根请求对象
+                command.wrapper = root
+                if (command && command.entrypoint) {
+                  // 设置入口点装饰器
+                  command.bin = (...props: any) => {
+                    rootWrapper = Object.assign(root, command.entrypoint(...props))
+                    const client: any = self._http(root, root.url, property)
+                    return client
                   }
-                  // 返回执行入口
-                  return command.bin
                 }
-              })
-            }
+                // 返回执行入口
+                return command.bin
+              }
+            })
             // 返回客户端
             return self._cmdProxy[cmd]
           }
-          const client: any = self._http(rootWrapper, url)
+          const client: any = self._http(rootWrapper, url, property)
           // 未使用指令
           if (client[cmd]) {
             // 直接返回客户端
@@ -174,9 +183,10 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
      * 返回包装好的 HTTP 客户端
      * @param rootWrapper
      * @param original 原始 URI
+     * @param property 请求对象路径
      * @private
      */
-    private _http (rootWrapper: RequestWrapper, original: string) {
+    private _http (rootWrapper: RequestWrapper, original: string, property: string) {
       // 局部抽取，减少重复代码
       const inject = (w: RequestWrapper, m: HttpMethod = 'GET', wrapper: boolean = false): Promise<any> | any => {
         // 请求对象封装
@@ -189,6 +199,7 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
         if (wrapper) {
           return struct
         }
+
         const request = this._adapter!.request(struct)
 
         if (rootWrapper.observable === false) {
@@ -201,6 +212,7 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
         get: w => inject(w),
         post: w => inject(w, 'POST'),
         put: w => inject(w, 'PUT'),
+        delete: w => inject(w, 'DELETE'),
         head: w => inject(w, 'HEAD'),
         patch: w => inject(w, 'PATCH'),
         options: w => inject(w, 'OPTIONS'),

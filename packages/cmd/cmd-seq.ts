@@ -12,7 +12,7 @@ export default class SequenceCommand implements Command {
     let wrapper = this.wrapper
     const proxy = new Proxy(commands, {
       get (target: any, cmd: string | symbol): any {
-        const command = target[cmd]
+        const command = new target[cmd]()
         if (command && command.entrypoint) {
           // 注入根请求对象
           command.wrapper = wrapper

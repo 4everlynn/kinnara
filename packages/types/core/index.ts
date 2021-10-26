@@ -1,11 +1,16 @@
-type HttpMethod = 'GET' | 'POST' | 'OPTIONS' | 'PUT' | 'PATCH' | 'HEAD' |
-    'get' | 'post' | 'options' | 'put' | 'patch' | 'head'
+type HttpMethod = 'GET' | 'POST' | 'OPTIONS' | 'PUT' | 'PATCH' | 'HEAD' | 'DELETE' |
+    'get' | 'post' | 'options' | 'put' | 'patch' | 'head' | 'delete'
 
-type strategy = 'session' | 'local'
+type strategy = 'session' | 'local' | 'memory'
 
 type CacheParams = {
+    uri: string,
     strategy: strategy,
-    frequency: number
+    frequency: number,
+    /**
+     * 是否仅在当前上下文中生效
+     */
+    scoped: boolean
 }
 
 type RequestWrapper = {
@@ -16,6 +21,20 @@ type RequestWrapper = {
     body?: any
     observable?: boolean,
     cache?: CacheParams | Number
+}
+
+interface ResponseCache {
+    body: any,
+    path: string[],
+    /**
+     * remaining times
+     */
+    remain: number,
+    options?: CacheParams
+}
+
+interface CacheManager {
+    doCache (params: CacheParams): ResponseCache
 }
 
 interface RequestAdapter {
@@ -68,6 +87,8 @@ interface RequestCommand {
 
     patch(request: RequestWrapper): Promise<any>
 
+    delete(request: RequestWrapper): Promise<any>
+
     head(request: RequestWrapper): Promise<any>
 
     options(request: RequestWrapper): Promise<any>
@@ -76,6 +97,9 @@ interface RequestCommand {
 }
 
 export {
+  CacheParams,
+  CacheManager,
+  ResponseCache,
   RequestWrapper,
   RequestAdapter,
   RequestCommand,

@@ -6,7 +6,7 @@ export * from './core'
 
 // install default cmd
 for (const Command of Object.values(Commands)) {
-  Kinnara.use(new Command())
+  Kinnara.use(Command)
 }
 
 export {

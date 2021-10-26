@@ -12,7 +12,7 @@ test('CommandTest', () => {
     .proxy(ROUTING)
 
   // 监听某个API的调用
-  const key = kinnara.listen(ROUTING.placeholder, async (response: any) => {
+  kinnara.listen(ROUTING.placeholder, async (response: any) => {
     // 调用另一个API
     // const tce = await proxy.energy.tce.get()
     console.log('gggggg')
@@ -20,9 +20,8 @@ test('CommandTest', () => {
       edward: 'YOU WILL SEE THIS'
     }
   })
-  kinnara.cancel(key)
   // 经过侦听器
-  proxy.placeholder.get()
+  proxy.placeholder.replace({ id: 3 }).get()
     .then((response: any) => { console.log('pass', response) })
 
   // 不经过侦听器
@@ -73,23 +72,33 @@ test('11', async () => {
 
   const API = {
     region: '/region',
+    rep: '/rep/{id}',
     industry: '/industry',
-    entType: '/ent-type',
+    entType: {
+      t: {
+        a: {
+          c: {
+            e: {
+              f: '/ent-type'
+            }
+          }
+        }
+      }
+    },
     ent: '/ent'
   }
 
-  kinnara.listen(`${API.ent}/page`, async (response) => {
-    console.log('------')
-    const { data } = await $kinnara.industry.join`/page`.get({
-      query: { size: 9999 }
-    })
-    console.log(data)
-    return response
-  })
-
   const $kinnara = kinnara.proxy(API)
 
-  const response = await $kinnara.ent.join`/page`.get()
-
-  console.log(response)
+  $kinnara.listen(API.ent, async (response: any) => {
+    await $kinnara.rep.replace({ id: 1 }).get({
+      cache: {
+        strategy: 'local',
+        frequency: 50,
+        scoped: true
+      }
+    })
+    console.log(response)
+    return response
+  })
 })
