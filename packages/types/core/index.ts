@@ -1,18 +1,6 @@
 type HttpMethod = 'GET' | 'POST' | 'OPTIONS' | 'PUT' | 'PATCH' | 'HEAD' | 'DELETE' |
     'get' | 'post' | 'options' | 'put' | 'patch' | 'head' | 'delete'
 
-type strategy = 'session' | 'local' | 'memory'
-
-type CacheParams = {
-    uri: string,
-    strategy: strategy,
-    frequency: number,
-    /**
-     * 是否仅在当前上下文中生效
-     */
-    scoped: boolean
-}
-
 type RequestWrapper = {
     method?: HttpMethod,
     url?: string,
@@ -20,21 +8,6 @@ type RequestWrapper = {
     query?: any,
     body?: any
     observable?: boolean,
-    cache?: CacheParams | Number
-}
-
-interface ResponseCache {
-    body: any,
-    path: string[],
-    /**
-     * remaining times
-     */
-    remain: number,
-    options?: CacheParams
-}
-
-interface CacheManager {
-    doCache (params: CacheParams): ResponseCache
 }
 
 interface RequestAdapter {
@@ -42,11 +15,11 @@ interface RequestAdapter {
 }
 
 interface Interceptor {
-    has (uri: string): boolean
-    process (uri: string, request: Promise<any>): Promise<any>
+    has (uri: string): boolean | string
+    process (uri: string, request: Promise<any>, wrapper: RequestWrapper): Promise<any>
     register (handler: {
-        uri: string,
-        h: (response: any) => any
+        uri: string | RegExp,
+        h: (request: RequestWrapper, response: any) => any
     }): string
     unload(uri:string):boolean
     encode (uri: string): string
@@ -74,7 +47,7 @@ interface HttpProxy {
      * @param uri
      * @param h 处理器
      */
-    listen (uri: string, h: (response: any) => any): string
+    subscribe (uri: string, h: (response: any) => any): string
     cancel(url:string): boolean
 }
 
@@ -97,9 +70,6 @@ interface RequestCommand {
 }
 
 export {
-  CacheParams,
-  CacheManager,
-  ResponseCache,
   RequestWrapper,
   RequestAdapter,
   RequestCommand,

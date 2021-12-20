@@ -10,7 +10,6 @@ import {
 } from '../types'
 import log from '../support/support-logging'
 import ApiInterceptor from './api-interceptor'
-import ScopedCacheManager from './scoped-cache-manager'
 
 export default class Kinnara implements StaticCommandSupport, HttpProxy {
     /**
@@ -43,15 +42,8 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
 
     private _interceptor: Interceptor
 
-    /**
-     * 有作用域的缓存管理器
-     * @private
-     */
-    private _cache: ScopedCacheManager
-
     constructor () {
       this._interceptor = new ApiInterceptor()
-      this._cache = new ScopedCacheManager()
     }
 
     /**
@@ -206,7 +198,7 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
           return request
         }
 
-        return this._interceptor.process(original, request)
+        return this._interceptor.process(original, request, struct)
       }
       const requestWrapper: RequestCommand = {
         get: w => inject(w),
@@ -226,12 +218,17 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
       return this
     }
 
-    listen (uri: string, h: (response: any) => any): string {
+    subscribe (uri: string | RegExp, h: (request: RequestWrapper, response: any) => any): string {
+      if (uri instanceof RegExp) {
+        uri = new RegExp(uri.source.replace(/{[\w-]+}/, '[\\w-]+'))
+      } else {
+        uri = new RegExp(uri.replace(/{[\w-]+}/, '[\\w-]+').concat('$'))
+      }
       // 注册拦截器
       return this._interceptor.register({ uri, h })
     }
 
-    cancel (uri: string):boolean {
-      return this._interceptor.unload(uri)
+    cancel (key: string):boolean {
+      return this._interceptor.unload(key)
     }
 }

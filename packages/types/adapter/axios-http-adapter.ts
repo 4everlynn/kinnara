@@ -1,16 +1,20 @@
 import { RequestAdapter, RequestWrapper } from '../core'
-import axios, { AxiosInstance } from 'axios'
 
 /**
  * 提供 Axios 的适配器默认实现
  */
 export default class AxiosHttpAdapter implements RequestAdapter {
-    private readonly _axios: AxiosInstance | null | undefined
+    private readonly _axios: any | null | undefined
 
-    constructor (instance?: AxiosInstance | null) {
+    constructor (instance?: any | null) {
       this._axios = instance
       if (!this._axios) {
-        this._axios = axios
+        // adapter for axios
+        try {
+          this._axios = require('axios')
+        } catch {
+          throw new Error('No axios instance found.')
+        }
       }
     }
 
@@ -18,12 +22,20 @@ export default class AxiosHttpAdapter implements RequestAdapter {
       if (!this._axios) {
         throw new Error('No axios instance found.')
       }
-      return this._axios({
-        url: wrapper.url,
-        method: wrapper.method,
-        data: wrapper.body,
-        headers: wrapper.headers,
-        params: wrapper.query
+      return new Promise<any>((resolve, reject) => {
+        this._axios({
+          url: wrapper.url,
+          method: wrapper.method,
+          data: wrapper.body,
+          headers: wrapper.headers,
+          params: wrapper.query
+        }).then((response: any) => {
+          if (response === undefined) {
+            reject(new Error('request with error.'))
+          } else {
+            resolve(response)
+          }
+        }).catch((error: Error) => reject(error))
       })
     }
 }
