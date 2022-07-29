@@ -2,7 +2,10 @@ import {
   Command,
   HttpMethod,
   HttpProxy,
+  HttpUrlPluginName,
   Interceptor,
+  KinnaraProxy,
+  KinnaraRuntimePlugin,
   RequestAdapter,
   RequestCommand,
   RequestWrapper,
@@ -10,6 +13,8 @@ import {
 } from '../types'
 import log from '../support/support-logging'
 import ApiInterceptor from './api-interceptor'
+
+const HTTP_URL_PLUGIN_NAME: HttpUrlPluginName = '@HttpUrlPlugin'
 
 export default class Kinnara implements StaticCommandSupport, HttpProxy {
     /**
@@ -42,6 +47,12 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
 
     private _interceptor: Interceptor
 
+    /**
+     * 插件集合
+     * @private
+     */
+    private _plugins: { [K: string]: KinnaraRuntimePlugin [] } = {}
+
     constructor () {
       this._interceptor = new ApiInterceptor()
     }
@@ -50,7 +61,7 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
      * proxy routing
      * @param routing
      */
-    proxy (routing: any): any {
+    proxy<T extends object> (routing: T): KinnaraProxy<T> {
       if (!this._adapter) {
         throw new Error('You must specify a request adapter for request proxy.')
       }
@@ -81,6 +92,26 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
     remove(cmd: Command): StaticCommandSupport
     remove (entryPoint: string | Command): StaticCommandSupport {
       return this
+    }
+
+    install (...plugins: KinnaraRuntimePlugin []) {
+      for (const p of plugins) {
+        if (p.name) {
+          const name = p.name
+          if (!this._plugins[name]) {
+            this._plugins[name] = []
+          }
+          this._plugins[name].push(p)
+        }
+      }
+    }
+
+    _getPlugins (type: string): KinnaraRuntimePlugin[] {
+      const plugins = this._plugins[type]
+      if (plugins) {
+        return plugins
+      }
+      return []
     }
 
     use (cmd: Command): StaticCommandSupport {
@@ -131,7 +162,9 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
       }
       // 此处开始为递归至根节点
       // 取出根节点的字符串
-      const url = rootTarget[key]
+      let url:string = rootTarget[key]
+      // 运行 URL 插件
+      url = this._mountURLPlugins(url, property)
       // last level, 底层代理，代理一个空对象
       return new Proxy({}, {
         get: (target: any, cmd) => {
@@ -143,7 +176,7 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
               get: (cmdProxy, name) => {
                 // 执行指令
                 const command = new cmdProxy[name]()
-                const root = { url: rootTarget[key] }
+                const root = { url: `${url}` }
                 // 注入根请求对象
                 command.wrapper = root
                 if (command && command.entrypoint) {
@@ -201,14 +234,14 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
         return this._interceptor.process(original, request, struct)
       }
       const requestWrapper: RequestCommand = {
-        get: w => inject(w),
-        post: w => inject(w, 'POST'),
-        put: w => inject(w, 'PUT'),
-        delete: w => inject(w, 'DELETE'),
-        head: w => inject(w, 'HEAD'),
-        patch: w => inject(w, 'PATCH'),
-        options: w => inject(w, 'OPTIONS'),
-        struct: w => inject(w, 'GET', true)
+        get: w => inject(w ?? {}),
+        post: w => inject(w ?? {}, 'POST'),
+        put: w => inject(w ?? {}, 'PUT'),
+        delete: w => inject(w ?? {}, 'DELETE'),
+        head: w => inject(w ?? {}, 'HEAD'),
+        patch: w => inject(w ?? {}, 'PATCH'),
+        options: w => inject(w ?? {}, 'OPTIONS'),
+        struct: w => inject(w ?? {}, 'GET', true)
       }
       return requestWrapper
     }
@@ -218,6 +251,12 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
       return this
     }
 
+    /**
+     * 订阅URI请求, 并可触发调整 response，不建议使用
+     * @deprecated 该函数已于 {@version 1.0.6} 开始过期
+     * @param uri
+     * @param h
+     */
     subscribe (uri: string | RegExp, h: (request: RequestWrapper, response: any) => any): string {
       if (uri instanceof RegExp) {
         uri = new RegExp(uri.source.replace(/{[\w-]+}/, '[\\w-]+'))
@@ -228,7 +267,21 @@ export default class Kinnara implements StaticCommandSupport, HttpProxy {
       return this._interceptor.register({ uri, h })
     }
 
-    cancel (key: string):boolean {
+    /**
+     * 取消订阅，不建议使用
+     * @deprecated 该函数已于 {@version 1.0.6} 开始过期
+     * @param key
+     */
+    cancel (key: string): boolean {
       return this._interceptor.unload(key)
+    }
+
+    private _mountURLPlugins (url: string, key: string): string {
+      let target = `${url}`
+      const urlPlugins = this._getPlugins(HTTP_URL_PLUGIN_NAME)
+      for (const p of urlPlugins) {
+        target = p.install({ url: target, chain: key.split('$.') })
+      }
+      return target
     }
 }

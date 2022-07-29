@@ -52,24 +52,53 @@ interface HttpProxy {
 }
 
 interface RequestCommand {
-    get(request: RequestWrapper): Promise<any>
+    get(request?: RequestWrapper): Promise<any>
 
-    post(request: RequestWrapper): Promise<any>
+    post(request?: RequestWrapper): Promise<any>
 
-    put(request: RequestWrapper): Promise<any>
+    put(request?: RequestWrapper): Promise<any>
 
-    patch(request: RequestWrapper): Promise<any>
+    patch(request?: RequestWrapper): Promise<any>
 
-    delete(request: RequestWrapper): Promise<any>
+    delete(request?: RequestWrapper): Promise<any>
 
-    head(request: RequestWrapper): Promise<any>
+    head(request?: RequestWrapper): Promise<any>
 
-    options(request: RequestWrapper): Promise<any>
+    options(request?: RequestWrapper): Promise<any>
 
-    struct(request: RequestWrapper): Promise<any>
+    struct(request?: RequestWrapper): Promise<any>
+}
+
+type Operator<T> = T extends string ? (RequestCommand & {
+    [k: string]: (...args: any[]) => RequestCommand
+}) : {
+    [K in keyof T]: Operator<T[K]>
+}
+
+type KinnaraProxy<T extends object> = { [K in keyof T ]: K extends string ? Operator<T[K]> : never}
+
+type HttpUrlPluginName = '@HttpUrlPlugin'
+
+interface KinnaraRuntimePlugin {
+    name: string
+    install (...args: any []): any
+}
+
+abstract class HttpUrlPlugin implements KinnaraRuntimePlugin {
+    name: HttpUrlPluginName = '@HttpUrlPlugin'
+
+    abstract install ({ url, chain }: { url: string, chain: string[] }): string
 }
 
 export {
+  HttpUrlPlugin
+}
+
+export {
+  HttpUrlPluginName,
+  KinnaraRuntimePlugin,
+  KinnaraProxy,
+  Operator,
   RequestWrapper,
   RequestAdapter,
   RequestCommand,

@@ -1,4 +1,4 @@
-![](https://img.shields.io/badge/fatewajs-Kinnara-red?style=for-the-badge&logo=typescript&labelColor=black ) ![](https://img.shields.io/badge/npm-v1.0.5-orange?style=for-the-badge&logo=npm&labelColor=black )  ![](https://img.shields.io/badge/gitpod-try!-gold?style=for-the-badge&logo=gitpod&labelColor=black )
+![](https://img.shields.io/badge/fatewajs-Kinnara-red?style=for-the-badge&logo=typescript&labelColor=black ) ![](https://img.shields.io/badge/npm-v1.0.6-orange?style=for-the-badge&logo=npm&labelColor=black )  ![](https://img.shields.io/badge/gitpod-try!-gold?style=for-the-badge&logo=gitpod&labelColor=black )
 
 
 - [Kinnara](#kinnara )
@@ -46,7 +46,7 @@ const routes = {
 // 实例化一个对象
 const kinnara = new Kinnara()
   
-const _: any = kinnara
+const _ = kinnara
         // 设置一个 http 请求适配器
         // kinnara 提供了一个 axios 的适配器
         // 构造器传递的参数为 AxiosInstance
